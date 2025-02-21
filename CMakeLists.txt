@@ -13,6 +13,7 @@ file(GLOB_RECURSE SOURCES src/*.cpp src/*.cc)
 file(GLOB_RECURSE HEADERS src/*.h src/*.hpp)
 
 add_library(${PROJECT_NAME} STATIC ${SOURCES} ${HEADERS})
+target_include_directories(${PROJECT_NAME} PUBLIC src)
 
 # Example executables
 add_executable(server example/server.cc)
