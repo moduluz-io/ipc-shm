@@ -12,6 +12,10 @@ namespace IPC {
     /**
      * This is a class that wraps a function and allows it to be called with a vector of std::any arguments.
      * The function is called with the arguments unpacked from the vector.
+     *
+     * NOTE: This class is having template constructor which takes function name and function pointer as arguments.
+     * there will not be any implementations written for these templates in the library so that we need to
+     * make this class a header only file without a .h and .cc file combination.
      */
     class Function {
     public:
@@ -43,13 +47,12 @@ namespace IPC {
          * Prints the details of the function.
          */
         void printInfo() {
-            std::cout << "Function: " << name_ << std::endl;
-            std::cout << "Return type: " << return_type_ << std::endl;
-            std::cout << "Arguments: ";
-            for (const auto& arg : arg_types_) {
-                std::cout << arg << " ";
+            std::cout << return_type_ << " " << name_ << "(";
+            for (size_t i = 0; i < arg_types_.size(); i++) {
+                std::cout << arg_types_[i];
+                if (i != arg_types_.size() - 1) std::cout << ", ";
             }
-            std::cout << std::endl;
+            std::cout << ")" << std::endl;
         }
     private:
         template <typename... Args, std::size_t... I>

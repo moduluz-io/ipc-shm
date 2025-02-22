@@ -10,6 +10,7 @@
     "type_traits": "cpp",
     "utility": "cpp",
     "variant": "cpp",
-    "typeinfo": "cpp"
+    "typeinfo": "cpp",
+    "ostream": "cpp"
   }
 }
