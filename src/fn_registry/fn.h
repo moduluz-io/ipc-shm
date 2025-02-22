@@ -39,14 +39,14 @@ namespace IPC {
         /**
          * Calls the function with the arguments unpacked from the vector.
          */
-        std::any invoke(const std::vector<std::any>& args) {
+        std::any invoke(const std::vector<std::any>& args) const {
             return function_(args);
         }
 
         /**
          * Prints the details of the function.
          */
-        void printInfo() {
+        void printInfo() const {
             std::cout << return_type_ << " " << name_ << "(";
             for (size_t i = 0; i < arg_types_.size(); i++) {
                 std::cout << arg_types_[i];
