@@ -8,15 +8,16 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Create the static library
-file(GLOB_RECURSE SOURCES src/*.cpp src/*.cc)
-file(GLOB_RECURSE HEADERS src/*.h src/*.hpp)
+include_directories(src)
 
-add_library(${PROJECT_NAME} STATIC ${SOURCES} ${HEADERS})
-target_include_directories(${PROJECT_NAME} PUBLIC src)
+# Create the static library
+# file(GLOB_RECURSE SOURCES src/*.cpp src/*.cc)
+# file(GLOB_RECURSE HEADERS src/*.h src/*.hpp)
+
+# add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
 
 # Example executables
 add_executable(server example/server.cc)
 add_executable(client example/client.cc)
-target_link_libraries(server PRIVATE ${PROJECT_NAME})
-target_link_libraries(client PRIVATE ${PROJECT_NAME})
+# target_link_libraries(server PRIVATE ${PROJECT_NAME})
+# target_link_libraries(client PRIVATE ${PROJECT_NAME})
