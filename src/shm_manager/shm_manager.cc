@@ -14,20 +14,28 @@ IPC::SharedMemoryManager::~SharedMemoryManager() {
     closeMemory();
 }
 
-void IPC::SharedMemoryManager::writeData(const void* data, size_t size) {
-    if (!shm_ptr || size > shm_size) {
+void IPC::SharedMemoryManager::writeData(const void* data, size_t size, size_t offset = 0) {
+    if (!shm_ptr || size > shm_size || offset + size > shm_size) {
         throw std::runtime_error("Invalid shared memory write operation.");
     }
 
-    memcpy(shm_ptr, data, size);
+    memcpy((char*)shm_ptr + offset, data, size);
 }
 
-void IPC::SharedMemoryManager::readData(void* buffer, size_t size) {
-    if (!shm_ptr || size > shm_size) {
+void IPC::SharedMemoryManager::readData(void* buffer, size_t size, size_t offset = 0) {
+    if (!shm_ptr || size > shm_size || offset + size > shm_size) {
         throw std::runtime_error("Invalid shared memory read operation.");
     }
 
-    memcpy(buffer, shm_ptr, size);
+    memcpy(buffer, (char*)shm_ptr + offset, size);
+}
+
+void* IPC::SharedMemoryManager::getMemoryPointer(size_t offset = 0) {
+    if (!shm_ptr || offset > shm_size) {
+        throw std::runtime_error("Invalid shared memory pointer operation.");
+    }
+
+    return (char*)shm_ptr + offset;
 }
 
 void IPC::SharedMemoryManager::removeMemory() {

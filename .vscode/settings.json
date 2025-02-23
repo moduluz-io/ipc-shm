@@ -11,6 +11,8 @@
     "utility": "cpp",
     "variant": "cpp",
     "typeinfo": "cpp",
-    "ostream": "cpp"
+    "ostream": "cpp",
+    "stdexcept": "cpp",
+    "cstring": "cpp"
   }
 }

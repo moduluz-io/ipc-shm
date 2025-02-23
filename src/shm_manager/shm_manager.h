@@ -13,10 +13,13 @@ namespace IPC {
         ~SharedMemoryManager();
 
         /// Write data to shared memory
-        void writeData(const void* data, size_t size);
+        void writeData(const void* data, size_t size, size_t offset = 0);
 
         /// Read data from shared memory
-        void readData(void* buffer, size_t size);
+        void readData(void* buffer, size_t size, size_t offset = 0);
+
+        /// Get the pointer to the shared memory
+        void* getMemoryPointer(size_t offset = 0);
 
         /// Remove shared memory (call this manually when done)
         void removeMemory();
