@@ -54,6 +54,21 @@ namespace IPC {
             }
             std::cout << ")" << std::endl;
         }
+
+        /**
+         * Returns the number of arguments for the function.
+         */
+        int getArgCount() const {
+            return arg_types_.size();
+        }
+
+        /**
+         * Returns the argument type at the given index.
+         */
+        std::string getArgType(int index) const {
+            if (index < 0 || index >= arg_types_.size()) throw std::runtime_error("Index out of bounds");
+            return arg_types_[index];
+        }
     private:
         template <typename... Args, std::size_t... I>
         static auto vector_to_tuple_helper(const std::vector<std::any>& vec, std::index_sequence<I...>) {
