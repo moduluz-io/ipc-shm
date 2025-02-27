@@ -1,4 +1,4 @@
-#include <fn_registry/fn_registry.h>
+#include <fn/fn_registry.h>
 #include <typeinfo>
 
 #define FUNCTION_CALL_DATA_SHM_SIZE 256
@@ -12,6 +12,7 @@ IPC::FunctionRegistry::FunctionRegistry(std::string channel_name) : channel_name
      * 1. Mutex
      * 2. Condition Variable
      *
+     * (The below data are saved in another SHM)
      * 3. Method call ID length (size_t)
      * 4. Method call ID (char*) - This is used as the channel_name for the shared memory that should
      * be created by the client to store the return value of the function.
@@ -51,8 +52,17 @@ IPC::FunctionRegistry::FunctionRegistry(std::string channel_name) : channel_name
     mtx_ = new(sync_shm_manager_->getMemoryPointer(0)) pthread_mutex_t;
     cv_ = new(sync_shm_manager_->getMemoryPointer(sizeof(pthread_mutex_t))) pthread_cond_t;
 
-    pthread_mutex_init(mtx_, NULL);
-    pthread_cond_init(cv_, NULL);
+    pthread_mutexattr_t mutexAttr;
+    pthread_mutexattr_init(&mutexAttr);
+    pthread_mutexattr_setpshared(&mutexAttr, PTHREAD_PROCESS_SHARED);
+    pthread_mutex_init(mtx_, &mutexAttr);
+    pthread_mutexattr_destroy(&mutexAttr);
+
+    pthread_condattr_t condAttr;
+    pthread_condattr_init(&condAttr);
+    pthread_condattr_setpshared(&condAttr, PTHREAD_PROCESS_SHARED);
+    pthread_cond_init(cv_, &condAttr);
+    pthread_condattr_destroy(&condAttr);
 
     if (this->mtx_ == NULL || this->cv_ == NULL) {
         throw std::runtime_error("Failed to initialize mutex or condition variable");
@@ -118,7 +128,7 @@ void IPC::FunctionRegistry::listen() {
 
         size_t shm_size = *(size_t*)(fn_call_data_shm_manager_->getMemoryPointer() + 128);
 
-        /// Create a new shared memory manager for the function call data
+        /// Create a new shared memory manager for reading the function call data
         SharedMemoryManager* fn_details_shm_manager = new SharedMemoryManager(shm_name, shm_size, false);
         if (fn_details_shm_manager == NULL) {
             throw std::runtime_error("Failed to initialize function details data shared memory");
@@ -134,6 +144,8 @@ void IPC::FunctionRegistry::listen() {
         offset += call_id_len;
 
         size_t method_name_len = *(size_t*)fn_details_shm_manager->getMemoryPointer(offset);
+        offset += sizeof(size_t);
+
         char* method_name = new char[method_name_len];
         fn_details_shm_manager->readData(method_name, method_name_len, offset);
         offset += method_name_len;
@@ -181,6 +193,8 @@ void IPC::FunctionRegistry::listen() {
         /// Invoke the function
         std::any ret = invokefunction(method_name, args);
 
+        std::string ret_value_shm_name = std::string(call_id) + "_ret";
+
         /// Write the return value to the shared memory
         SharedMemoryManager return_size_shm_manager(
             (std::string(call_id) + "_ret_size").c_str(), sizeof(size_t), true);
@@ -189,31 +203,31 @@ void IPC::FunctionRegistry::listen() {
             std::string ret_str = std::any_cast<std::string>(ret);
             *ret_size = ret_str.size();
 
-            SharedMemoryManager ret_shm_manager(call_id, *ret_size, true);
+            SharedMemoryManager ret_shm_manager(ret_value_shm_name.c_str(), *ret_size, true);
             ret_shm_manager.writeData(ret_str.c_str(), ret_str.size());
         }
         else if (ret.type().name() == typeid(int).name()) {
             *ret_size = sizeof(int);
 
-            SharedMemoryManager ret_shm_manager(call_id, *ret_size, true);
+            SharedMemoryManager ret_shm_manager(ret_value_shm_name.c_str(), *ret_size, true);
             *((int*)ret_shm_manager.getMemoryPointer()) = std::any_cast<int>(ret);
         }
         else if (ret.type().name() == typeid(double).name()) {
             *ret_size = sizeof(double);
 
-            SharedMemoryManager ret_shm_manager(call_id, *ret_size, true);
+            SharedMemoryManager ret_shm_manager(ret_value_shm_name.c_str(), *ret_size, true);
             *((double*)ret_shm_manager.getMemoryPointer()) = std::any_cast<double>(ret);
         }
         else if (ret.type().name() == typeid(float).name()) {
             *ret_size = sizeof(float);
 
-            SharedMemoryManager ret_shm_manager(call_id, *ret_size, true);
+            SharedMemoryManager ret_shm_manager(ret_value_shm_name.c_str(), *ret_size, true);
             *((float*)ret_shm_manager.getMemoryPointer()) = std::any_cast<float>(ret);
         }
         else if (ret.type().name() == typeid(bool).name()) {
             *ret_size = sizeof(bool);
 
-            SharedMemoryManager ret_shm_manager(call_id, *ret_size, true);
+            SharedMemoryManager ret_shm_manager(ret_value_shm_name.c_str(), *ret_size, true);
             *((bool*)ret_shm_manager.getMemoryPointer()) = std::any_cast<bool>(ret);
         }
 

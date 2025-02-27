@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include <fn_registry/fn.h>
+#include <fn/fn.h>
 
 int main() {
     std::cout << "Server example running..." << std::endl;

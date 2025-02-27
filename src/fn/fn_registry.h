@@ -3,7 +3,7 @@
 #include <map>
 #include <pthread.h>
 
-#include <fn_registry/fn.h>
+#include <fn/fn.h>
 #include <shm_manager/shm_manager.h>
 
 namespace IPC {

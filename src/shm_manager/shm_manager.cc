@@ -61,9 +61,12 @@ void IPC::SharedMemoryManager::createMemory() {
 }
 
 void IPC::SharedMemoryManager::openMemory() {
-    shm_fd = shm_open(shm_name, O_RDWR, 0666);
-    if (shm_fd == -1) {
-        throw std::runtime_error("Failed to open shared memory.");
+    while (true) {
+        shm_fd = shm_open(shm_name, O_RDWR, 0666);
+
+        if (shm_fd != -1) {
+            break;
+        }
     }
 
     shm_ptr = mmap(0, shm_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
