@@ -36,6 +36,7 @@ namespace IPC {
             arg_types_ = { typeid(Args).name()... };
         }
 
+
         /**
          * Calls the function with the arguments unpacked from the vector.
          */

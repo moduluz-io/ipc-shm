@@ -3,6 +3,7 @@
 #include <random>
 #include <sstream>
 #include <iomanip>
+#include <typeinfo>
 
 #ifndef FUNCTION_CALL_DATA_SHM_SIZE
 #define FUNCTION_CALL_DATA_SHM_SIZE 256
@@ -68,7 +69,8 @@ IPC::FunctionInvoker::~FunctionInvoker() {
     delete sync_shm_manager_;
 }
 
-std::any IPC::FunctionInvoker::invoke(std::string name, const std::vector<std::any>& args) {
+template <typename Ret>
+Ret IPC::FunctionInvoker::invoke(std::string name, const std::vector<std::any>& args) {
     while (true) {
         pthread_mutex_lock(mtx_);
 
@@ -194,8 +196,7 @@ std::any IPC::FunctionInvoker::invoke(std::string name, const std::vector<std::a
     }
 
     /// Write the function call data
-    size_t offset = 0;
-    size_t call_id_len = call_id.size();
+    offset = 0;
     fn_call_data_shm_manager_->writeData((void*)call_id.c_str(), 128, offset);
     offset += 128;
 
@@ -206,4 +207,51 @@ std::any IPC::FunctionInvoker::invoke(std::string name, const std::vector<std::a
     /// Awake the listener
     pthread_cond_broadcast(cv_);
     pthread_mutex_unlock(mtx_);
+
+    /// Wait for the response
+    while (true) {
+        pthread_mutex_lock(mtx_);
+        pthread_cond_wait(cv_, mtx_);
+
+        /// Check if a function call is completed
+        if (((char*)fn_call_data_shm_manager_->getMemoryPointer())[0] != 0) {
+            pthread_mutex_unlock(mtx_);
+            continue;
+        }
+        else {
+            break;
+        }
+    }
+
+    if (typeid(Ret) == typeid(void)) {
+        return;
+    }
+
+    /// Read the return value
+    SharedMemoryManager return_size_shm_manager(
+        (call_id + "_ret_size").c_str(), sizeof(size_t), false);
+    size_t* ret_size = (size_t*)(return_size_shm_manager.getMemoryPointer());
+
+    Ret ret;
+    if (*ret_size > 0) {
+        SharedMemoryManager ret_shm_manager((call_id + "_ret").c_str(), *ret_size, false);
+
+        if (typeid(Ret) == typeid(std::string)) {
+            ret = std::string((char*)ret_shm_manager.getMemoryPointer(), *ret_size);
+        }
+        else if (typeid(Ret) == typeid(int)) {
+            ret = *((int*)ret_shm_manager.getMemoryPointer());
+        }
+        else if (typeid(Ret) == typeid(double)) {
+            ret = *((double*)ret_shm_manager.getMemoryPointer());
+        }
+        else if (typeid(Ret) == typeid(float)) {
+            ret = *((float*)ret_shm_manager.getMemoryPointer());
+        }
+        else if (typeid(Ret) == typeid(bool)) {
+            ret = *((bool*)ret_shm_manager.getMemoryPointer());
+        }
+    }
+
+    return ret;
 }

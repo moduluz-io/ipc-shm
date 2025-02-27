@@ -1,6 +1,6 @@
 #include <shm_manager/shm_manager.h>
 
-IPC::SharedMemoryManager::SharedMemoryManager::SharedMemoryManager(const char* name, size_t size, bool create = true)
+IPC::SharedMemoryManager::SharedMemoryManager::SharedMemoryManager(std::string name, size_t size, bool create)
     : shm_name(name), shm_size(size), shm_fd(-1), shm_ptr(nullptr) {
     if (create) {
         createMemory();
@@ -14,7 +14,7 @@ IPC::SharedMemoryManager::~SharedMemoryManager() {
     closeMemory();
 }
 
-void IPC::SharedMemoryManager::writeData(const void* data, size_t size, size_t offset = 0) {
+void IPC::SharedMemoryManager::writeData(const void* data, size_t size, size_t offset) {
     if (!shm_ptr || size > shm_size || offset + size > shm_size) {
         throw std::runtime_error("Invalid shared memory write operation.");
     }
@@ -22,7 +22,7 @@ void IPC::SharedMemoryManager::writeData(const void* data, size_t size, size_t o
     memcpy((char*)shm_ptr + offset, data, size);
 }
 
-void IPC::SharedMemoryManager::readData(void* buffer, size_t size, size_t offset = 0) {
+void IPC::SharedMemoryManager::readData(void* buffer, size_t size, size_t offset) {
     if (!shm_ptr || size > shm_size || offset + size > shm_size) {
         throw std::runtime_error("Invalid shared memory read operation.");
     }
@@ -30,7 +30,7 @@ void IPC::SharedMemoryManager::readData(void* buffer, size_t size, size_t offset
     memcpy(buffer, (char*)shm_ptr + offset, size);
 }
 
-void* IPC::SharedMemoryManager::getMemoryPointer(size_t offset = 0) {
+void* IPC::SharedMemoryManager::getMemoryPointer(size_t offset) {
     if (!shm_ptr || offset > shm_size) {
         throw std::runtime_error("Invalid shared memory pointer operation.");
     }
@@ -39,11 +39,11 @@ void* IPC::SharedMemoryManager::getMemoryPointer(size_t offset = 0) {
 }
 
 void IPC::SharedMemoryManager::removeMemory() {
-    shm_unlink(shm_name);
+    shm_unlink(shm_name.c_str());
 }
 
 void IPC::SharedMemoryManager::createMemory() {
-    shm_fd = shm_open(shm_name, O_CREAT | O_RDWR, 0666);
+    shm_fd = shm_open(shm_name.c_str(), O_CREAT | O_RDWR, 0666);
     if (shm_fd == -1) {
         throw std::runtime_error("Failed to create shared memory.");
     }
@@ -62,7 +62,7 @@ void IPC::SharedMemoryManager::createMemory() {
 
 void IPC::SharedMemoryManager::openMemory() {
     while (true) {
-        shm_fd = shm_open(shm_name, O_RDWR, 0666);
+        shm_fd = shm_open(shm_name.c_str(), O_RDWR, 0666);
 
         if (shm_fd != -1) {
             break;

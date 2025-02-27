@@ -5,11 +5,12 @@
 #include <sys/mman.h>
 #include <cstring>
 #include <fcntl.h> 
+#include <string>
 
 namespace IPC {
     class SharedMemoryManager {
     public:
-        SharedMemoryManager(const char* name, size_t size, bool create = true);
+        SharedMemoryManager(std::string name, size_t size, bool create = true);
         ~SharedMemoryManager();
 
         /// Write data to shared memory
@@ -25,7 +26,7 @@ namespace IPC {
         void removeMemory();
 
     private:
-        const char* shm_name;
+        std::string shm_name;
         size_t shm_size;
         int shm_fd;
         void* shm_ptr;
