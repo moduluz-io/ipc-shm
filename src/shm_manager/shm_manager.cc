@@ -27,7 +27,7 @@ void IPC::SharedMemoryManager::readData(void* buffer, size_t size, size_t offset
         throw std::runtime_error("Invalid shared memory read operation.");
     }
 
-    memcpy(buffer, (char*)shm_ptr + offset, size);
+    memcpy(buffer, (void*)((char*)shm_ptr + offset), size);
 }
 
 void* IPC::SharedMemoryManager::getMemoryPointer(size_t offset) {

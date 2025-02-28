@@ -123,7 +123,11 @@ namespace IPC {
         void listen() {
             while (true) {
                 pthread_mutex_lock(mtx_);
+
+                std::cout << "Waiting for signal..." << std::endl;
                 pthread_cond_wait(cv_, mtx_);
+
+                std::cout << "Condition variable signal recieved" << std::endl;
 
                 /// Check if a function call is in progress
                 if (((char*)fn_call_data_shm_manager_->getMemoryPointer())[0] == 0) {
@@ -134,7 +138,7 @@ namespace IPC {
 
                 /// Read the function call data
                 char* shm_name = new char[129];
-                fn_call_data_shm_manager_->readData(shm_name, 0, 128);
+                fn_call_data_shm_manager_->readData(shm_name, 128, 0);
                 shm_name[128] = '\0';
 
                 size_t shm_size = *(size_t*)(((char*)fn_call_data_shm_manager_->getMemoryPointer()) + 128);
