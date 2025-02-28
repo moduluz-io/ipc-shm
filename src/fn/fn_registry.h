@@ -154,17 +154,21 @@ namespace IPC {
                 size_t call_id_len = *(size_t*)fn_details_shm_manager->getMemoryPointer(offset);
                 offset += sizeof(size_t);
 
-                char* call_id = new char[call_id_len];
+                char* call_id = new char[call_id_len + 1];
                 fn_details_shm_manager->readData(call_id, call_id_len, offset);
+                call_id[call_id_len] = '\0';
                 offset += call_id_len;
 
                 size_t method_name_len = *(size_t*)fn_details_shm_manager->getMemoryPointer(offset);
                 offset += sizeof(size_t);
 
-                char* method_name = new char[method_name_len];
+                char* method_name = new char[method_name_len + 1];
                 fn_details_shm_manager->readData(method_name, method_name_len, offset);
+                method_name[method_name_len] = '\0';
                 offset += method_name_len;
 
+                std::cout << "Method name length: " << method_name_len << std::endl;
+                std::cout << "Method to execute: " << method_name << std::endl;
                 if (registered_fns_.find(method_name) == registered_fns_.end()) {
                     throw std::runtime_error("Function not found");
                 }
@@ -177,8 +181,9 @@ namespace IPC {
                     size_t arg_len = *(size_t*)fn_details_shm_manager->getMemoryPointer(offset);
                     offset += sizeof(size_t);
 
-                    char* arg_data = new char[arg_len];
+                    char* arg_data = new char[arg_len + 1];
                     fn_details_shm_manager->readData(arg_data, arg_len, offset);
+                    arg_data[arg_len] = '\0';
                     offset += arg_len;
 
                     std::string arg_type = getArgType(method_name, i);
